@@ -47,6 +47,7 @@ def prompt_llama(prompt: str):
                 print(d['generation'], end='')
                 sys.stdout.flush()
 
+# https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-cohere-command.html
 def prompt_cohere(prompt: str):
     body = json.dumps({
         "prompt": prompt,
@@ -67,8 +68,30 @@ def prompt_cohere(prompt: str):
                     print(d['text'], end='')
                     sys.stdout.flush()
 
+def prompt_claude(prompt: str):
+    body = json.dumps({
+        "prompt": prompt,
+        # "stream": True,
+        "max_tokens_to_sample": 4000
+    })
+    response = brt.invoke_model_with_response_stream(
+        modelId="anthropic.claude-instant-v1",
+        body=body
+    )
 
-prompt = "Human: write a python function to compute the min, mean and max of a list of integers. Assistant: "
+    stream = response.get('body')
+    if stream:
+        for event in stream:
+            chunk = event.get('chunk')
+            if chunk:
+                d = json.loads(chunk.get('bytes').decode())
+                print(d['completion'], end='')
+                sys.stdout.flush()
+
+
+prompt = "Human: Generate a 7 day itinerary for a vacation to Japan in June. Interests include experiencing modern " \
+         "culture, unusual sights, immersion.  Assistant:"
 # prompt_llama(prompt)
 # prompt_titan_text(prompt)
-prompt_cohere(prompt)
+# prompt_cohere(prompt)
+prompt_claude(prompt)
