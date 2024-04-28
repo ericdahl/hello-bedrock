@@ -47,6 +47,28 @@ def prompt_llama(prompt: str):
                 print(d['generation'], end='')
                 sys.stdout.flush()
 
+def prompt_cohere(prompt: str):
+    body = json.dumps({
+        "prompt": prompt,
+        "stream": True
+    })
+    response = brt.invoke_model_with_response_stream(
+        modelId="cohere.command-light-text-v14",
+        body=body
+    )
+
+    stream = response.get('body')
+    if stream:
+        for event in stream:
+            chunk = event.get('chunk')
+            if chunk:
+                d = json.loads(chunk.get('bytes').decode())
+                if not d["is_finished"]:
+                    print(d['text'], end='')
+                    sys.stdout.flush()
+
+
 prompt = "Human: write a python function to compute the min, mean and max of a list of integers. Assistant: "
 # prompt_llama(prompt)
-prompt_titan_text(prompt)
+# prompt_titan_text(prompt)
+prompt_cohere(prompt)
