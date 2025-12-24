@@ -130,11 +130,47 @@ def prompt_claude(prompt: str):
         print(f"Error calling Claude: {e}", file=sys.stderr)
         raise
 
+def prompt_mistral(prompt: str):
+    body = json.dumps({
+        "prompt": prompt,
+        "max_tokens": 4096,
+        "temperature": 0.7,
+        "top_p": 0.9
+    })
+    
+    try:
+        response = brt.invoke_model_with_response_stream(
+            modelId="mistral.mixtral-8x7b-instruct-v0:1",
+            body=body
+        )
+
+        stream = response.get('body')
+        if stream:
+            for event in stream:
+                chunk = event.get('chunk')
+                if chunk:
+                    d = json.loads(chunk.get('bytes').decode())
+                    # Mistral streaming response format
+                    if 'outputs' in d:
+                        for output in d['outputs']:
+                            if 'text' in output:
+                                print(output['text'], end='')
+                                sys.stdout.flush()
+                    elif 'text' in d:
+                        print(d['text'], end='')
+                        sys.stdout.flush()
+                    elif 'chunk' in d and 'text' in d['chunk']:
+                        print(d['chunk']['text'], end='')
+                        sys.stdout.flush()
+    except Exception as e:
+        print(f"Error calling Mistral: {e}", file=sys.stderr)
+        raise
+
 
 def main():
     parser = argparse.ArgumentParser(description='Generate text using AWS Bedrock models')
     parser.add_argument('--model', '-m', 
-                       choices=['claude', 'titan', 'llama', 'cohere'],
+                       choices=['claude', 'titan', 'llama', 'cohere', 'mistral'],
                        default='claude',
                        help='Model to use (default: claude)')
     parser.add_argument('prompt', 
@@ -148,7 +184,8 @@ def main():
         'claude': prompt_claude,
         'titan': prompt_titan,
         'llama': prompt_llama,
-        'cohere': prompt_cohere
+        'cohere': prompt_cohere,
+        'mistral': prompt_mistral
     }
     
     model_func = model_functions[args.model]
