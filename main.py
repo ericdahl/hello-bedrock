@@ -343,6 +343,11 @@ def main():
                        choices=['claude', 'titan', 'llama', 'cohere', 'mistral'],
                        default='claude',
                        help='Model to use (default: claude)')
+    parser.add_argument('--no-diagnostics',
+                       action='store_false',
+                       dest='diagnostics',
+                       default=True,
+                       help='Disable token usage and cost diagnostics (default: enabled)')
     parser.add_argument('prompt', 
                        nargs='?',
                        default="Generate a 7 day itinerary for a vacation to Japan in June. Interests include experiencing modern culture, unusual sights, immersion.",
@@ -361,7 +366,8 @@ def main():
     model_func = model_functions[args.model]
     diagnostics = model_func(args.prompt)
     print()
-    print_diagnostics(args.model, diagnostics)
+    if args.diagnostics:
+        print_diagnostics(args.model, diagnostics)
 
 
 if __name__ == '__main__':
