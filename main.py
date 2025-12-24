@@ -7,7 +7,8 @@ import json
 import sys
 
 
-brt = boto3.client(service_name='bedrock-runtime')
+session = boto3.Session()
+brt = session.client(service_name='bedrock-runtime')
 
 def prompt_titan_text(prompt: str):
 
@@ -74,12 +75,17 @@ def prompt_cohere(prompt: str):
 
 def prompt_claude(prompt: str):
     body = json.dumps({
-        "prompt": prompt,
-        # "stream": True,
-        "max_tokens_to_sample": 4000
+        "anthropic_version": "bedrock-2023-05-31",
+        "max_tokens": 4000,
+        "messages": [
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
     })
     response = brt.invoke_model_with_response_stream(
-        modelId="anthropic.claude-instant-v1",
+        modelId="us.anthropic.claude-haiku-4-5-20251001-v1:0",
         body=body
     )
 
@@ -89,12 +95,14 @@ def prompt_claude(prompt: str):
             chunk = event.get('chunk')
             if chunk:
                 d = json.loads(chunk.get('bytes').decode())
-                print(d['completion'], end='')
-                sys.stdout.flush()
+                if d.get('type') == 'content_block_delta':
+                    if 'text' in d.get('delta', {}):
+                        print(d['delta']['text'], end='')
+                        sys.stdout.flush()
 
 
-prompt = "Human: Generate a 7 day itinerary for a vacation to Japan in June. Interests include experiencing modern " \
-         "culture, unusual sights, immersion.  Assistant:"
+prompt = "Generate a 7 day itinerary for a vacation to Japan in June. Interests include experiencing modern " \
+         "culture, unusual sights, immersion."
 # prompt_llama(prompt)
 # prompt_titan_text(prompt)
 # prompt_cohere(prompt)
