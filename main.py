@@ -1,3 +1,4 @@
+#!/usr/bin/env -S uv run --with boto3
 import boto3
 import json
 import sys
