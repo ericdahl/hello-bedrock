@@ -1,4 +1,7 @@
-#!/usr/bin/env -S uv run --with boto3
+#!/usr/bin/env uv run
+# /// script
+# dependencies = ["boto3"]
+# ///
 import boto3
 import json
 import sys
